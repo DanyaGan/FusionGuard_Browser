@@ -1,5 +1,6 @@
 import argparse, os, shutil, json
-
+from datetime import datetime
+from prettytable import PrettyTable
 
 from Browser.Selenium_browser import driver
 
@@ -12,11 +13,26 @@ def check_or_create_file(file_path, data=None):
             f.write(str(data) + '\n')
 
 parser = argparse.ArgumentParser(description='Command Information.')
-parser.add_argument('-cr', '--creat', help='creat profile, name')
+parser.add_argument('-c', '--creat', help='creat profile, name')
 parser.add_argument('-s', '--start', help='Start profile')
 parser.add_argument('-d', '--delet', help='Delet profile')
+parser.add_argument('-l', '--list', action='store_const', const=True, default=False, help='list profiles')
 
 args = parser.parse_args()
+if args.list:
+    table = PrettyTable()
+
+    table.field_names = ["Number","Name", "Time_Creat"]
+
+    with open('list_profiles.json', 'r', encoding='UTF-8') as f:
+        data = f.readlines()
+    
+    for number, profile in enumerate(data): 
+        profile = eval(profile)
+        table.add_row([number+1, profile['Name'], profile['Time_creat']])
+    
+    print(table)
+
 if args.delet:
     with open('list_profiles.json', 'r', encoding='UTF-8') as f:
         lines = f.readlines()
@@ -26,7 +42,8 @@ if args.delet:
             if eval(line)['Name'] != args.delet:
                 f.write(line)
             else:
-                shutil.rmtree(f'profiles/{args.delet}')
+                if os.path.exists(profiles/{args.delet}):
+                    shutil.rmtree(f'profiles/{args.delet}')
                 print(f'Deleted profile ({args.delet})')
  
 
@@ -40,7 +57,7 @@ if args.creat:
                 break
         else:
             print(f'Profile created ({args.creat}).')
-            check_or_create_file('list_profiles.json', {'Name': args.creat})
+            check_or_create_file('list_profiles.json', {'Name': args.creat, 'Time_creat': str(datetime.now())})
 
 driver = driver()
 if args.start:
