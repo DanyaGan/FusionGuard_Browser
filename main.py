@@ -2,7 +2,8 @@ import argparse, os, shutil, json
 from datetime import datetime
 from prettytable import PrettyTable
 
-from Browser.Selenium_browser import driver
+from Browser.Selenium_browser import driver as dr
+from Browser.Selenium_undetected import driver as dr_un
 
 def check_or_create_file(file_path, data=None):
     if not os.path.exists(file_path):
@@ -13,7 +14,7 @@ def check_or_create_file(file_path, data=None):
             f.write(str(data) + '\n')
 
 parser = argparse.ArgumentParser(description='Command Information.')
-parser.add_argument('-c', '--creat', help='creat profile, name')
+parser.add_argument('-c', '--creat', nargs='+', help='creat profile, name')
 parser.add_argument('-s', '--start', help='Start profile')
 parser.add_argument('-d', '--delet', help='Delet profile')
 parser.add_argument('-l', '--list', action='store_const', const=True, default=False, help='list profiles')
@@ -48,18 +49,18 @@ if args.delet:
  
 
 if args.creat:
+    print(args.creat[0])
     check_or_create_file('list_profiles.json')
 
     with open('list_profiles.json', 'r', encoding='UTF-8') as f:
         for profile in f.readlines():
-            if eval(profile)['Name'] == args.creat:
+            if eval(profile)['Name'] == args.creat[0]:
                 print('There is already a profile with this name.')
                 break
         else:
-            print(f'Profile created ({args.creat}).')
-            check_or_create_file('list_profiles.json', {'Name': args.creat, 'Time_creat': str(datetime.now())})
+            print(f'Profile created ({args.creat[0]}).')
+            check_or_create_file('list_profiles.json', {'Name': args.creat[0], 'browser': args.creat[1], 'Time_creat': str(datetime.now())})
 
-driver = driver()
 if args.start:
     with open('list_profiles.json', 'r', encoding='UTF-8') as f:
         for profile in f.readlines():
@@ -70,5 +71,12 @@ if args.start:
             print('There is no such profile.')
             exit()
     
-    driver.creat_profile(args.start)
-    driver.driver_start()
+    if eval(profile)['browser'] == 'selenium':
+        driver = dr()
+        driver.creat_profile(args.start)
+        driver.driver_start()
+
+    elif eval(profile)['browser'] == 'selen_unde':
+        driver = dr_un()
+        driver.creat_profile(args.start)
+        driver.driver_start()
