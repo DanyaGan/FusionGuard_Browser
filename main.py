@@ -15,14 +15,15 @@ def write_to_csv(data):
     if check_file_exists():
         df = pd.read_csv(filename)
         
-        if data['Name'] in df['Name'].values and data['Creat_Time']:
+        if data['Name'] in df['Name'].values and 'Creat_Time' in data.keys():
             print('There is already a profile with this name.')
         
         elif data['Name'] in df['Name'].values:
-            df.loc[df['Name'] == data['Name'], ['Browser', 'Creat_Time']] = [data['Browser'], data['Creat_Time']]
+            df.loc[df['Name'] == data['Name'], 'Last_Open'] = str(datetime.now())
+            df.loc[df['Name'] == data['Name'], 'Num_Open'] += 1
         
         else:
-            df = df.append(data, ignore_index=True)
+            df = df._append(data, ignore_index=True)
     else:
         df = pd.DataFrame([data])
 
@@ -67,18 +68,20 @@ if args.delet:
 
 if args.creat:
     print(f'Creat profile ({args.creat[0]})')
-    write_to_csv({'Name': args.creat[0], 'Browser': args.creat[1], 'Creat_Time': str(datetime.now())})
+    write_to_csv({'Name': args.creat[0], 'Browser': args.creat[1], 'Creat_Time': str(datetime.now()), 'Num_Open': 0})
 
 if args.start:
     df = pd.read_csv(filename)
     browser = df.loc[df['Name'] == args.start, 'Browser'].values
     
     if browser == 'selenium':
+        write_to_csv({'Name': args.start})
         driver = dr()
         driver.creat_profile(args.start)
         driver.driver_start()
 
     elif browser == 'selen_unde':
+        write_to_csv({'Name': args.start})
         driver = dr_un()
         driver.creat_profile(args.start)
         driver.driver_start()
