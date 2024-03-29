@@ -43,7 +43,7 @@ class driver:
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/23.9.0.2325 Yowser/2.5 Safari/537.36',
         ]
 
-    def creat_profile(self, name):
+    def creat_profile(self, name, proxy):
         self.chrome_options = webdriver.ChromeOptions()
 
         self.chrome_options.add_argument(f"user-agent={random.choice(self.UserAgents)}")
@@ -51,6 +51,12 @@ class driver:
         self.chrome_options.add_argument(f"--user-data-dir={sys.path[0]}/profiles")
         
         self.chrome_options.add_argument(f"--profile-directory={name}")
+
+        if proxy['type'] == 'socks5':
+            self.chrome_options.add_argument(f'--proxy-server=socks5://{proxy["host"]}')
+            
+        elif proxy['type'] == 'https':
+            self.chrome_options.add_argument(f'--proxy-server=https://{proxy["host"]}')
 
     def driver_start(self):
         if self.chrome_options:
