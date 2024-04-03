@@ -13,10 +13,10 @@ options:
 
 -h, --help, show this help message and exit
 
--c CREAT [CREAT ...], creat profile, name
+-c CREAT [CREAT ...], creat profile, [name, browser(selenium or selen_unde)]
                         
 -s START, Start profile
 
 -d DELET, Delet profile                     
--l, list profiles
-  
+-l list, list profiles
+-p proxy, add proxy profile [name profile, type proxy, ip:port]
