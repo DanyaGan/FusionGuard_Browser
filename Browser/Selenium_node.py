@@ -10,24 +10,24 @@ class driver:
     def __init__(self) -> None:
         self.driver: object
         self.node_process: object
+        self.chrome_options: object
+
+    def creat_profile(self, name):
+        path_file = r'Browser/driver.js'
+        self.node_process = subprocess.Popen(['node', path_file, name], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = self.node_process.stdout.readline()
+        print(output.decode('utf-8'))
+        r = json.loads(output.decode('utf-8'))
+
+        self.chrome_options = Options()
+        self.chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{r['port']}")
 
     def driver_start(self):
-        if True:
-            path_file = r'Browser/driver.js'
-            path_file = r'driver.js'
-            self.node_process = subprocess.Popen(['node', path_file, 'open', '1710874167'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-            output = self.node_process.stdout.readline()
-            print(output.decode('utf-8'))
-            r = json.loads(output.decode('utf-8'))
+        self.driver = webdriver.Chrome(options=self.chrome_options, service=Service('Browser/chromedriver_119.exe'))
 
-            chrome_options = Options()
-            chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{r['port']}")
-
-            self.driver = webdriver.Chrome(options=chrome_options, service=Service('chromedriver_119.exe'))
-
-            input('Stop profile (Yes?)')
-            self.driver_stop()
+        input('Stop profile (Yes?)')
+        self.driver_stop()
 
     def driver_stop(self):        
         self.driver.quit()

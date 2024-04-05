@@ -5,6 +5,7 @@ import pandas as pd
 
 from Browser.Selenium_browser import driver as dr
 from Browser.Selenium_undetected import driver as dr_un
+from Browser.Selenium_node import driver as dr_nd
 
 filename = 'list_profiles.csv'
 
@@ -88,4 +89,10 @@ if args.start:
         write_to_csv({'Name': args.start})
         driver = dr_un()
         driver.creat_profile(args.start, {'type': Type_Proxy, 'host': Host_Proxy})
+        driver.driver_start()
+
+    elif browser == 'node':
+        write_to_csv({'Name': args.start})
+        driver = dr_nd()
+        driver.creat_profile(args.start)
         driver.driver_start()
