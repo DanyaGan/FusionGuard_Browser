@@ -23,11 +23,8 @@ class driver:
         self.chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{r['port']}")
 
     def driver_start(self):
-
         self.driver = webdriver.Chrome(options=self.chrome_options, service=Service('Browser/chromedriver_119.exe'))
 
-        input('Stop profile (Yes?)')
-        self.driver_stop()
 
     def driver_stop(self):        
         self.driver.quit()

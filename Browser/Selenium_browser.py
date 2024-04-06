@@ -61,8 +61,6 @@ class driver:
     def driver_start(self):
         if self.chrome_options:
             self.driver = webdriver.Chrome(options=self.chrome_options)
-            input('Stop profile (Yes?)')
-            self.driver_stop()
 
     def driver_stop(self):
         self.driver.quit()

@@ -63,8 +63,6 @@ class driver:
     def driver_start(self):
         if self.chrome_options:
             self.driver = Chrome(options=self.chrome_options, driver_executable_path=ChromeDriverManager().install(), version_main=122)
-            input('Stop profile (Yes?)')
-            self.driver_stop()
 
     def driver_stop(self):
         self.driver.quit()
