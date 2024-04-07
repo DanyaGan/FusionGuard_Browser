@@ -1,9 +1,10 @@
-import sys, random
+import sys, random, os
 from selenium import webdriver
 
 
 class driver:
     def __init__(self):
+        self.path_user_data = f'{os.path.dirname(os.path.abspath(__file__))}/profiles'
         self.driver: object
         self.chrome_options: object
 
@@ -48,7 +49,7 @@ class driver:
 
         self.chrome_options.add_argument(f"user-agent={random.choice(self.UserAgents)}")
         
-        self.chrome_options.add_argument(f"--user-data-dir={sys.path[0]}/profiles")
+        self.chrome_options.add_argument(f"--user-data-dir={self.path_user_data}")
         
         self.chrome_options.add_argument(f"--profile-directory={name}")
 
