@@ -7,9 +7,8 @@ const { plugin } = require('selenium-with-fingerprints');
 
 let browser;
 
-async function Create(profileName) {
-    const name_profile = `E:/My Project backup/profiles/${profileName}`;
-    const options = new Options().addArguments(`--user-data-dir=${path.resolve(name_profile)}`, '--headless');
+async function Create(profilePath) {
+    const options = new Options().addArguments(`--user-data-dir=${path.resolve(profilePath)}`, '--headless');
     
     const fingerprint = await plugin.fetch('', {tags: ['Microsoft Windows', 'Chrome']});
     
@@ -27,10 +26,8 @@ async function Create(profileName) {
     }));
 }
 
-async function Open(profileName) {
-    const name_profile = `E:/My Project backup/profiles/${profileName}`;
-    
-    plugin.useProfile(path.resolve(name_profile), {});
+async function Open(profilePath) {
+    plugin.useProfile(path.resolve(profilePath), {});
     browser = await plugin.spawn({ headless: false });
 
     console.log(JSON.stringify({
@@ -38,19 +35,17 @@ async function Open(profileName) {
     }));
 }
 
-async function ManageProfile(profileName) {
-    const profilePath = `E:/My Project backup/profiles/${profileName}`;
-
+async function ManageProfile(profilePath) {
     if (fs.existsSync(profilePath)) {
-        await Open(profileName);
+        await Open(profilePath);
     } else {
-        await Create(profileName);
+        await Create(profilePath);
     }
 }
 
-const profileName = process.argv[2];
+const profilePath = `${process.argv[3]}\\${process.argv[2]}`;
 
-ManageProfile('p2');
+ManageProfile(profilePath);
 
 
 
