@@ -63,8 +63,11 @@ class Browser:
                 df.to_csv(self.filename, index=False)
 
     def creat_profile(self, name_browser):
-        print(f'Creat profile ({name_browser})')
-        self.write_to_csv({'Name': name_browser[0], 'Browser': name_browser[1], 'Creat_Time': str(datetime.now()), 'Num_Open': 0})
+        if name_browser in ('selenium', 'selen_unde', 'node'):
+            print(f'Creat profile ({name_browser})')
+            self.write_to_csv({'Name': name_browser[0], 'Browser': name_browser[1], 'Creat_Time': str(datetime.now()), 'Num_Open': 0})
+        else:
+            print('No name browser')
 
     def start_profiles(self, name):
         df = pd.read_csv(self.filename)
@@ -98,7 +101,7 @@ class Browser:
 
 if '__main__' == __name__:
     parser = argparse.ArgumentParser(description='Command Information.')
-    parser.add_argument('-c', '--creat', nargs='+', help='creat profile, [name, browser(selenium or selen_unde)]')
+    parser.add_argument('-c', '--creat', nargs='+', help='creat profile, [name, browser(selenium or selen_unde or node)]')
     parser.add_argument('-s', '--start', help='Start profile')
     parser.add_argument('-d', '--delet', help='Delet profile')
     parser.add_argument('-l', '--list', action='store_const', const=True, default=False, help='list profiles')
