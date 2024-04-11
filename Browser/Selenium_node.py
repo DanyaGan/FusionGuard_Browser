@@ -8,6 +8,8 @@ import os
 import requests
 import zipfile
 import io
+import sqlite3
+import win32crypt
 
 class driver:
     def __init__(self) -> None:
@@ -59,6 +61,26 @@ class driver:
         self.driver.quit()
         self.node_process.terminate()
 
+    def get_cookies(self, name_profile, path_file):
+        cpath = f'{self.path_user_data}\\{name_profile}\\Network\\Cookies'
+        cookies = []
+
+        conn = sqlite3.connect(cpath)
+        c = conn.cursor()
+        c.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value FROM cookies")
+
+        for host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value in c.fetchall():
+            try:
+                decrypted_value = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)[1].decode("utf-8") or value or 0
+            except:
+                decrypted_value = value
+
+            cookies.append({'domain': host_key, 'name': name, 'value': decrypted_value, 'path': path,
+                            'expires': expires_utc, 'secure': bool(is_secure), 'httponly': bool(is_httponly)})
+        conn.close()
+        
+        with open(f'{path_file}\cookies_{name_profile}.txt', 'w') as f:
+            f.write(str(cookies))
 if '__main__' == __name__:
     bot = driver()
     bot.download_and_extract_chrome_driver()

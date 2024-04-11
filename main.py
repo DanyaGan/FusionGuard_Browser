@@ -63,7 +63,7 @@ class Browser:
                 df.to_csv(self.filename, index=False)
 
     def creat_profile(self, name_browser):
-        if name_browser in ('selenium', 'selen_unde', 'node'):
+        if name_browser[1] in ('selenium', 'selen_unde', 'node'):
             print(f'Creat profile ({name_browser})')
             self.write_to_csv({'Name': name_browser[0], 'Browser': name_browser[1], 'Creat_Time': str(datetime.now()), 'Num_Open': 0})
         else:
@@ -99,6 +99,22 @@ class Browser:
             input('Stop profile (Yes?)')
             self.driver_stop()
 
+    def export_cookies(self, exp):
+        df = pd.read_csv(self.filename)
+        browser = df.loc[df['Name'] == exp[0], 'Browser'].values
+
+        if browser == 'selenium':
+            driver = dr()
+            driver.get_cookies(exp[0], exp[1])
+
+        elif browser == 'selen_unde':
+            driver = dr_un()
+            driver.get_cookies(exp[0], exp[1])
+
+        elif browser == 'node':
+            driver = dr_nd()
+            driver.get_cookies(exp[0], exp[1])
+            
 if '__main__' == __name__:
     parser = argparse.ArgumentParser(description='Command Information.')
     parser.add_argument('-c', '--creat', nargs='+', help='creat profile, [name, browser(selenium or selen_unde or node)]')
@@ -106,6 +122,7 @@ if '__main__' == __name__:
     parser.add_argument('-d', '--delet', help='Delet profile')
     parser.add_argument('-l', '--list', action='store_const', const=True, default=False, help='list profiles')
     parser.add_argument('-p', '--proxy', nargs='+', help='add proxy profile [name profile, type proxy, ip:port]')
+    parser.add_argument('-ec', '--export_cookies', nargs='+', help='export cookies profile (name profile, path save file)')
 
     args = parser.parse_args()
     Browser = Browser()
@@ -115,3 +132,4 @@ if '__main__' == __name__:
     if args.delet: Browser.delet_profile(args.delet)
     if args.creat: Browser.creat_profile(args.creat)
     if args.start: Browser.start_profiles(args.start)
+    if args.export_cookies: Browser.export_cookies(args.export_cookies)
