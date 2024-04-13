@@ -82,33 +82,27 @@ class Browser:
     def start_profiles(self, name):
         # Start a profile
         df = pd.read_csv(self.filename)
-        browser = df.loc[df['Name'] == name, 'Browser'].values
-        type_proxy = df.loc[df['Name'] == name, 'Type_Proxy'].values
-        host_proxy = df.loc[df['Name'] == name, 'Host_Proxy'].values
+        browser_info = df[df['Name'] == name].iloc[0]  # Extract row matching the name
+
+        browser = browser_info['Browser']
+        type_proxy = browser_info['Type_Proxy']
+        host_proxy = browser_info['Host_Proxy']
+
+        self.write_to_csv({'Name': name})
 
         if browser == 'selenium':
-            self.write_to_csv({'Name': name})
             driver = dr()
             driver.create_profile(name, {'type': type_proxy, 'host': host_proxy})
-            driver.driver_start()
-            input('Stop profile (Yes?)')
-            self.driver_stop()
-
         elif browser == 'selen_unde':
-            self.write_to_csv({'Name': name})
             driver = dr_un()
             driver.create_profile(name, {'type': type_proxy, 'host': host_proxy})
-            driver.driver_start()
-            input('Stop profile (Yes?)')
-            self.driver_stop()
-
         elif browser == 'node':
-            self.write_to_csv({'Name': name})
             driver = dr_nd()
             driver.create_profile(name)
-            driver.driver_start()
-            input('Stop profile (Yes?)')
-            self.driver_stop()
+
+        driver.driver_start()
+        input('Stop profile (Yes?)')
+        self.driver_stop()
 
     def export_cookies(self, exp):
         # Export cookies for a profile
