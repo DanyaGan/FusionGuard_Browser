@@ -18,34 +18,46 @@ class Browser:
         return pd.read_csv(self.filename, nrows=1).shape[0] > 0 if os.path.isfile(self.filename) else False
 
     def write_to_csv(self, data):
-        # Create or write to the file
         if self.check_file_exists():
             df = pd.read_csv(self.filename)
             
-            # Check if profile name already exists and update last open time and number of opens
-            if data['Name'] in df['Name'].values and 'Creat_Time' in data.keys():
-                print('There is already a profile with this name.')
-            
-            elif data['Name'] in df['Name'].values:
-                df.loc[df['Name'] == data['Name'], 'Last_Open'] = str(datetime.now())
-                df.loc[df['Name'] == data['Name'], 'Num_Open'] += 1
-            
+            # Check if profile name already exists
+            if data['Name'] in df['Name'].values:
+                if 'Creat_Time' in data:
+                    print('There is already a profile with this name.')
+                else:
+                    # Update last open time and number of opens
+                    df.loc[df['Name'] == data['Name'], 'Last_Open'] = str(datetime.now())
+                    df.loc[df['Name'] == data['Name'], 'Num_Open'] += 1
             else:
+                # Append new profile data
                 df = df.append(data, ignore_index=True)
         else:
+            # Create new DataFrame if file doesn't exist
             df = pd.DataFrame([data])
 
+        # Write DataFrame to CSV
         df.to_csv(self.filename, index=False)
 
     def add_proxy(self, proxy):
-        # Add proxy to the profile
-        if self.check_file_exists():
-            df = pd.read_csv(self.filename)
-            if proxy[0] in df['Name'].values:
-                index = df[df['Name'] == proxy[0]].index
-                df.loc[index, 'Type_Proxy'] = proxy[1]
-                df.loc[index, 'Host_Proxy'] = proxy[2]
-                df.to_csv(self.filename, index=False)
+        # Check if the file exists
+        if not self.check_file_exists():
+            return
+
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv(self.filename)
+
+        # Check if the proxy name already exists in the DataFrame
+        mask = df['Name'] == proxy[0]
+        if mask.any():
+            # Update existing proxy information
+            df.loc[mask, ['Type_Proxy', 'Host_Proxy']] = proxy[1:]
+        else:
+            # Append new proxy information
+            df = df.append({'Name': proxy[0], 'Type_Proxy': proxy[1], 'Host_Proxy': proxy[2]}, ignore_index=True)
+
+        # Write the updated DataFrame back to the CSV file
+        df.to_csv(self.filename, index=False)
 
     def list_profiles(self):
         # Display profiles in a table format
@@ -67,9 +79,12 @@ class Browser:
         if self.check_file_exists():
             df = pd.read_csv(self.filename)
             if name in df['Name'].values:
-                index_to_remove = df[df['Name'] == name].index
-                df = df.drop(index_to_remove)
+                df = df[df['Name'] != name]  # Фильтрация строк, где имя не равно заданному
                 df.to_csv(self.filename, index=False)
+            else:
+                print(f"Profile with name '{name}' not found.")
+        else:
+            print("File does not exist.")
 
     def create_profile(self, name_browser):
         # Create a new profile
