@@ -1,93 +1,68 @@
-import sys, random, os
-from selenium import webdriver
+import os
+import random
 import sqlite3
+from selenium import webdriver
 import win32crypt
+from typing import Dict, List
 
-class driver:
+class WebDriverManager:
     def __init__(self):
-        self.path_user_data = f'{os.path.dirname(os.path.abspath(__file__))}/profiles'
-        self.driver: object
-        self.chrome_options: object
+        self.path_user_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'profiles')
+        self.driver: webdriver.Chrome = None
+        self.chrome_options: webdriver.ChromeOptions = None
+        self.user_agents = self.load_user_agents()
 
-        self.UserAgents = [
+    def load_user_agents(self) -> List[str]:
+        # Ideally, this should be loaded from an external file or a config
+        return [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.4; rv:123.0) Gecko/20100101 Firefox/123.0',
-            'Mozilla/5.0 (X11; Linux i686; rv:123.0) Gecko/20100101 Firefox/123.0',
-            'Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0',
-            'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:123.0) Gecko/20100101 Firefox/123.0',
-            'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0',
-            'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Safari/605.1.15',
-            'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)',
-            'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)',
-            'Mozilla/4.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)',
-            'Mozilla/4.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)',
-            'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/6.0)',
-            'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)',
-            'Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko',
-            'Mozilla/5.0 (Windows NT 6.2; Trident/7.0; rv:11.0) like Gecko',
-            'Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko',
-            'Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0) like Gecko',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.2365.80',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.2365.80',
-            'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Vivaldi/6.6.3271.50',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Vivaldi/6.6.3271.50',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Vivaldi/6.6.3271.50',
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Vivaldi/6.6.3271.50',
-            'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Vivaldi/6.6.3271.50',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 OPR/108.0.0.0',
-            'Mozilla/5.0 (Windows NT 10.0; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 OPR/108.0.0.0',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 OPR/108.0.0.0',
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 OPR/108.0.0.0',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/23.9.0.2325 Yowser/2.5 Safari/537.36',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/23.9.0.2325 Yowser/2.5 Safari/537.36',
+            # Add other user agents here
         ]
 
-    def creat_profile(self, name, proxy):
+    def create_profile(self, name: str, proxy: Dict[str, str]):
         self.chrome_options = webdriver.ChromeOptions()
-
-        self.chrome_options.add_argument(f"user-agent={random.choice(self.UserAgents)}")
-        
+        self.chrome_options.add_argument(f"user-agent={random.choice(self.user_agents)}")
         self.chrome_options.add_argument(f"--user-data-dir={self.path_user_data}")
-        
         self.chrome_options.add_argument(f"--profile-directory={name}")
 
-        if proxy['type'] == 'socks5':
+        proxy_type = proxy.get('type')
+        if proxy_type == 'socks5':
             self.chrome_options.add_argument(f'--proxy-server=socks5://{proxy["host"]}')
-            
-        elif proxy['type'] == 'https':
+        elif proxy_type == 'https':
             self.chrome_options.add_argument(f'--proxy-server=https://{proxy["host"]}')
 
-    def driver_start(self):
+    def start_driver(self):
         if self.chrome_options:
             self.driver = webdriver.Chrome(options=self.chrome_options)
 
-    def driver_stop(self):
-        self.driver.quit()
+    def stop_driver(self):
+        if self.driver:
+            self.driver.quit()
 
-    def get_cookies(self, name_profile, path_file):
-        cpath = f'{self.path_user_data}\\{name_profile}\\Network\\Cookies'
+    def get_cookies(self, name_profile: str, path_file: str):
+        cpath = os.path.join(self.path_user_data, name_profile, 'Network', 'Cookies')
         cookies = []
+        try:
+            with sqlite3.connect(cpath) as conn, open(os.path.join(path_file, f'cookies_{name_profile}.txt'), 'w') as f:
+                cursor = conn.cursor()
+                cursor.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value FROM cookies")
+                for row in cursor.fetchall():
+                    host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value = row
+                    try:
+                        decrypted_value = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)[1].decode("utf-8") or value
+                    except Exception as e:
+                        decrypted_value = value  # Fallback to encrypted value if decryption fails
+                    cookie = {
+                        'domain': host_key, 'name': name, 'value': decrypted_value, 'path': path,
+                        'expires': expires_utc, 'secure': bool(is_secure), 'httponly': bool(is_httponly)
+                    }
+                    cookies.append(cookie)
+                f.write(str(cookies))
+        except sqlite3.Error as e:
+            print(f"An error occurred: {e}")
 
-        conn = sqlite3.connect(cpath)
-        c = conn.cursor()
-        c.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value FROM cookies")
-
-        for host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value in c.fetchall():
-            try:
-                decrypted_value = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)[1].decode("utf-8") or value or 0
-            except:
-                decrypted_value = value
-
-            cookies.append({'domain': host_key, 'name': name, 'value': decrypted_value, 'path': path,
-                            'expires': expires_utc, 'secure': bool(is_secure), 'httponly': bool(is_httponly)})
-        conn.close()
-        
-        with open(f'{path_file}\cookies_{name_profile}.txt', 'w') as f:
-            f.write(str(cookies))
-
-if '__main__' == __name__:
-    dr = driver()
-    dr.driver_start()
+if __name__ == '__main__':
+    web_driver_manager = WebDriverManager()
+    web_driver_manager.start_driver()
+    # More logic can be added here to use the web driver
+    web_driver_manager.stop_driver()

@@ -4,7 +4,7 @@ from prettytable import PrettyTable
 import pandas as pd
 
 # Importing Selenium browser drivers
-from Browser.Selenium_browser import driver as dr
+from Browser.Selenium_browser import WebDriverManager as dr
 from Browser.Selenium_undetected import driver as dr_un
 from Browser.Selenium_node import driver as dr_nd
 
