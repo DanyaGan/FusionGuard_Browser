@@ -31,7 +31,7 @@ class Browser:
                     df.loc[df['Name'] == data['Name'], 'Num_Open'] += 1
             else:
                 # Append new profile data
-                df = df.append(data, ignore_index=True)
+                df = df._append(data, ignore_index=True)
         else:
             # Create new DataFrame if file doesn't exist
             df = pd.DataFrame([data])
@@ -54,7 +54,7 @@ class Browser:
             df.loc[mask, ['Type_Proxy', 'Host_Proxy']] = proxy[1:]
         else:
             # Append new proxy information
-            df = df.append({'Name': proxy[0], 'Type_Proxy': proxy[1], 'Host_Proxy': proxy[2]}, ignore_index=True)
+            df = df._append({'Name': proxy[0], 'Type_Proxy': proxy[1], 'Host_Proxy': proxy[2]}, ignore_index=True)
 
         # Write the updated DataFrame back to the CSV file
         df.to_csv(self.filename, index=False)
@@ -139,7 +139,7 @@ class Browser:
 if '__main__' == __name__:
     # Parsing command line arguments
     parser = argparse.ArgumentParser(description='Command Information.')
-    parser.add_argument('-c', '--creat', nargs='+', help='create profile, [name, browser(selenium or selen_unde or node)]')
+    parser.add_argument('-c', '--create', nargs='+', help='create profile, [name, browser(selenium or selen_unde or node)]')
     parser.add_argument('-s', '--start', help='Start profile')
     parser.add_argument('-d', '--delete', help='Delete profile')
     parser.add_argument('-l', '--list', action='store_const', const=True, default=False, help='List profiles')
