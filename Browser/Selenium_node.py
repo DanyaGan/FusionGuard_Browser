@@ -10,18 +10,28 @@ import zipfile
 import io
 import sqlite3
 import win32crypt
+import time
+import shutil
 
 class driver:
     def __init__(self) -> None:
         self.driver: object
         self.node_process: object
         self.chrome_options: object
+        self.profile_name: str
+        self.eco: bool
         self.path_user_data = f'{os.path.dirname(os.path.abspath(__file__))}'
+    
+    def ensure_directory_exists(self, directory_path):
+        # Checking if the directory exists
+        if not os.path.exists(directory_path):
+            # Create a directory if it doesn't exist
+            os.makedirs(directory_path)
 
     def download_and_extract_chrome_driver(self):
         file_driver = 'chromedriver_119.exe'
 
-        if not os.path.exists(f'{self.path_user_data}\\{file_driver}'):
+        if os.path.exists(f'{self.path_user_data}\\{file_driver}'):
             return
 
         response = requests.get('https://storage.googleapis.com/chrome-for-testing-public/119.0.6045.105/win64/chromedriver-win64.zip')
@@ -42,13 +52,25 @@ class driver:
         else:
             print("Ошибка при загрузке драйвера")
 
-    def creat_profile(self, name):
+    def create_profile(self, name, proxy, eco=False):
+        self.eco = eco
+        self.profile_name = name
+        self.ensure_directory_exists(f'{self.path_user_data}\\profiles')
+        self.ensure_directory_exists(f'{self.path_user_data}\\profiles\\{name}_info')
         path_file = f'{self.path_user_data}\\driver.js'
-        self.node_process = subprocess.Popen(['node', path_file, name, self.path_user_data], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output = self.node_process.stdout.readline()
-        print(output.decode('utf-8'))
-        r = json.loads(output.decode('utf-8'))
-
+        self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        for _ in range(100):
+            output = self.node_process.stdout.readline()
+            print(output.decode('utf-8'))
+            try:
+                r = json.loads(output.decode('utf-8'))
+                break
+            except:
+                time.sleep(1)
+        else:
+            print('Error start profile')
+                
         self.chrome_options = Options()
         self.chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{r['port']}")
 
@@ -56,13 +78,18 @@ class driver:
         self.download_and_extract_chrome_driver()
         self.driver = webdriver.Chrome(options=self.chrome_options, service=Service(f'{self.path_user_data}\\chromedriver_119.exe'))
 
-
     def driver_stop(self):        
         self.driver.quit()
         self.node_process.terminate()
+        
+        self.get_cookies(self.profile_name, f'{self.path_user_data}\\profiles\\{self.profile_name}_info')
+        time.sleep(5)
+        if self.eco:
+            shutil.rmtree(f'{self.path_user_data }\\profiles\\{self.profile_name}')
 
     def get_cookies(self, name_profile, path_file):
-        cpath = f'{self.path_user_data}\\{name_profile}\\Network\\Cookies'
+        
+        cpath = f'{self.path_user_data}\\profiles\\{name_profile}\\Default\\Network\\Cookies'
         cookies = []
 
         conn = sqlite3.connect(cpath)
@@ -79,8 +106,5 @@ class driver:
                             'expires': expires_utc, 'secure': bool(is_secure), 'httponly': bool(is_httponly)})
         conn.close()
         
-        with open(f'{path_file}\cookies_{name_profile}.txt', 'w') as f:
+        with open(f'{path_file}\cookies_{name_profile}.json', 'w') as f:
             f.write(str(cookies))
-if '__main__' == __name__:
-    bot = driver()
-    bot.download_and_extract_chrome_driver()

@@ -113,11 +113,11 @@ class Browser:
             driver.create_profile(name, {'type': type_proxy, 'host': host_proxy})
         elif browser == 'node':
             driver = dr_nd()
-            driver.create_profile(name)
+            driver.create_profile(name, host_proxy)
 
         driver.driver_start()
         input('Stop profile (Yes?)')
-        self.driver_stop()
+        driver.driver_stop()
 
     def export_cookies(self, exp):
         # Export cookies for a profile

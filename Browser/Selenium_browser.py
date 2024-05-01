@@ -33,7 +33,7 @@ class WebDriverManager:
         elif proxy_type == 'https':
             self.chrome_options.add_argument(f'--proxy-server=https://{proxy["host"]}')
 
-    def start_driver(self):
+    def driver_start(self):
         # Start Chrome driver with configured options
         if self.chrome_options:
             self.driver = webdriver.Chrome(options=self.chrome_options)
