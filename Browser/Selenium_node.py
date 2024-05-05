@@ -91,24 +91,32 @@ class driver:
         if self.eco:
             shutil.rmtree(f'{self.path_user_data }\\profiles\\{self.profile_name}')
 
-    def get_cookies(self, name_profile, path_file):
-        
+    def get_cookies(self, name_profile:str, path_file:str):
+        # Construct path to the cookies database
         cpath = f'{self.path_user_data}\\profiles\\{name_profile}\\Default\\Network\\Cookies'
+        
+        # Create an empty list to store cookies
         cookies = []
 
-        conn = sqlite3.connect(cpath)
-        c = conn.cursor()
-        c.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value, creation_utc, last_access_utc, last_update_utc FROM cookies")
+        # Connect to the cookies database
+        with sqlite3.connect(cpath) as conn:
+            c = conn.cursor()
+            # Fetch cookies data from the database
+            c.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value FROM cookies")
+            for row in c.fetchall():
+                host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value = row
+                try:
+                    # Decrypt the cookie value
+                    decrypted_value = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)[1].decode("utf-8") or value or ""
+                except Exception as e:
+                    # Handle decryption errors
+                    decrypted_value = value
 
-        for host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value in c.fetchall():
-            try:
-                decrypted_value = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)[1].decode("utf-8") or value or 0
-            except:
-                decrypted_value = value
-            cookies.append({"domain": host_key, "name": name, "value": decrypted_value, "path": path,
-                            "expires": expires_utc, "secure": is_secure, "httponly": is_httponly})
-        conn.close()
-        
+                # Append cookie details to the list
+                cookies.append({"domain": host_key, "name": name, "value": decrypted_value, "path": path,
+                                "expires": expires_utc, "secure": is_secure, "httponly": is_httponly})
+
+        # Write cookies to a JSON file
         with open(f'{path_file}\cookies_{name_profile}.json', 'w') as f:
             f.write(str(cookies))
     
