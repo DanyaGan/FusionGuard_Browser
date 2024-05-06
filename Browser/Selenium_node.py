@@ -121,21 +121,23 @@ class driver:
             f.write(str(cookies))
     
     def set_cookies(self, name_profile: str, cookies: list):
-        with open(f'{self.path_user_data}\\profiles\\{name_profile}_info\\cookies_{name_profile}.json', 'r', encoding="utf-8") as f:
+        # Define paths for cookie database and JSON file
+        db_cookies_path = f'{self.path_user_data}\\profiles\\{name_profile}\\Default\\Network\\Cookies'
+        cookies_path = f'{self.path_user_data}\\profiles\\{name_profile}_info\\cookies_{name_profile}.json'
+        
+        # Read cookies from JSON file
+        with open(cookies_path, 'r', encoding="utf-8") as f:
             cookies = eval(f.read())
         
-        keypath = f'{self.path_user_data}\\profiles\\{name_profile}\\Local State'
-        cpath = f'{self.path_user_data}\\profiles\\{name_profile}\\Default\\Network\\Cookies'
-
-        conn = sqlite3.connect(cpath)
+        # Connect to the cookies database
+        conn = sqlite3.connect(db_cookies_path)
         c = conn.cursor()
+        
+        # Clear existing cookies from the database
         c.execute("DELETE FROM cookies")
         conn.commit()
 
-        with open(keypath, "r") as f:
-            masterkey = b64decode(json.loads(f.read())["os_crypt"]["encrypted_key"])[5:]
-            masterkey = win32crypt.CryptUnprotectData(masterkey, None, None, None, 0)[1]
-
+        # Iterate through the cookies and insert them into the database
         for cookie in cookies:
             try:
                 c.execute("""
@@ -145,28 +147,30 @@ class driver:
                         source_port, is_same_party, last_update_utc, encrypted_value, value
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    cookie['domain'],  # host_key
-                    cookie['name'],  # name
-                    cookie['path'],  # path
-                    cookie['expires'],  # expires_utc
-                    13359226438123929,  # creation_utc
-                    '',  # top_frame_site_key
-                    13359226438123929,  # last_access_utc
-                    cookie['secure'],  # is_secure
-                    cookie['httponly'],  # is_httponly
-                    1,  # has_expires
-                    1,  # is_persistent
-                    1,  # priority
-                    0,  # samesite
-                    2,  # source_scheme
-                    443,  # source_port
-                    0,  # is_same_party
-                    13359226438123929,  # last_update_utc
-                    '',  # encrypted_value
-                    cookie['value']  # value
+                    cookie['domain'],     # host_key
+                    cookie['name'],       # name
+                    cookie['path'],       # path
+                    cookie['expires'],    # expires_utc
+                    13359226438123929,    # creation_utc (placeholder value)
+                    '',                   # top_frame_site_key
+                    13359226438123929,    # last_access_utc (placeholder value)
+                    cookie['secure'],     # is_secure
+                    cookie['httponly'],   # is_httponly
+                    1,                    # has_expires
+                    1,                    # is_persistent
+                    1,                    # priority
+                    0,                    # samesite
+                    2,                    # source_scheme
+                    443,                  # source_port
+                    0,                    # is_same_party
+                    13359226438123929,    # last_update_utc (placeholder value)
+                    '',                   # encrypted_value
+                    cookie['value']       # value
                 ))
                 conn.commit()
             except Exception as e:
+                # Handle any exceptions that occur during insertion
                 print(f"Error inserting cookie {cookie}: {e}")
         
+        # Close the database connection
         conn.close()
