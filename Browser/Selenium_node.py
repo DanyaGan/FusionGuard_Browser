@@ -1,10 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from base64 import b64decode
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
 import subprocess
 import json
 import os
@@ -78,7 +74,7 @@ class driver:
 
     def driver_start(self):
         self.set_cookies(self.profile_name, None)
-        
+
         self.download_and_extract_chrome_driver()
         self.driver = webdriver.Chrome(options=self.chrome_options, service=Service(f'{self.path_user_data}\\chromedriver_119.exe'))
 
@@ -91,7 +87,7 @@ class driver:
         if self.eco:
             shutil.rmtree(f'{self.path_user_data }\\profiles\\{self.profile_name}')
 
-    def get_cookies(self, name_profile:str, path_file:str):
+    def get_cookies(self, name_profile:str, path_file:str, consider:list=(), ignore:list=()):
         # Construct path to the cookies database
         cpath = f'{self.path_user_data}\\profiles\\{name_profile}\\Default\\Network\\Cookies'
         
@@ -112,10 +108,11 @@ class driver:
                     # Handle decryption errors
                     decrypted_value = value
 
-                # Append cookie details to the list
-                cookies.append({"domain": host_key, "name": name, "value": decrypted_value, "path": path,
-                                "expires": expires_utc, "secure": is_secure, "httponly": is_httponly})
-
+                if host_key in consider or host_key not in ignore:
+                    # Append cookie details to the list
+                    cookies.append({"domain": host_key, "name": name, "value": decrypted_value, "path": path,
+                                    "expires": expires_utc, "secure": is_secure, "httponly": is_httponly})
+                    
         # Write cookies to a JSON file
         with open(f'{path_file}\cookies_{name_profile}.json', 'w') as f:
             f.write(str(cookies))
