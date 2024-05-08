@@ -51,14 +51,32 @@ class driver:
         else:
             print("Ошибка при загрузке драйвера")
 
-    def create_profile(self, name, proxy, eco=False):
+    def create_profile(self, name, proxy, eco=True):
         self.eco = eco
         self.profile_name = name
         self.ensure_directory_exists(f'{self.path_user_data}\\profiles')
         self.ensure_directory_exists(f'{self.path_user_data}\\profiles\\{name}_info')
         path_file = f'{self.path_user_data}\\driver.js'
-        self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
+        if eco:
+            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for _ in range(100):
+                output = self.node_process.stdout.readline()
+                try:
+                    r = json.loads(output.decode('utf-8'))
+                    self.node_process.terminate()
+                    break
+                except:
+                    time.sleep(1)
+            else:
+                print('Error start profile')
+                
+            time.sleep(5)
+            self.set_cookies(self.profile_name, None)
+            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
         for _ in range(100):
             output = self.node_process.stdout.readline()
             try:
@@ -73,8 +91,6 @@ class driver:
         self.chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{r['port']}")
 
     def driver_start(self):
-        self.set_cookies(self.profile_name, None)
-
         self.download_and_extract_chrome_driver()
         self.driver = webdriver.Chrome(options=self.chrome_options, service=Service(f'{self.path_user_data}\\chromedriver_119.exe'))
 

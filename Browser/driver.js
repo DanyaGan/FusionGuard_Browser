@@ -33,12 +33,8 @@ async function Create(profilePath) {
     }
     const chrome = await plugin.launch(new Builder().setChromeOptions(options));
     chrome.quit();
-      
-    plugin.useProfile(path.resolve(profilePath), {});
-    browser = await plugin.spawn({ headless: false });
-
     console.log(JSON.stringify({
-        'port': browser.port
+        'status': 'ok'
     }));
 }
 
