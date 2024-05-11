@@ -30,27 +30,45 @@ class driver:
     def download_and_extract_chrome_driver(self):
         file_driver = 'chromedriver_119.exe'
 
+        # Check if the driver already exists
         if os.path.exists(f'{self.path_user_data}\\{file_driver}'):
+            print("Driver already installed")
             return
 
-        response = requests.get('https://storage.googleapis.com/chrome-for-testing-public/119.0.6045.105/win64/chromedriver-win64.zip')
+        try:
+            # Download the driver archive
+            response = requests.get('https://storage.googleapis.com/chrome-for-testing-public/119.0.6045.105/win64/chromedriver-win64.zip')
+            response.raise_for_status()  # Check for successful request
+        except requests.exceptions.RequestException as e:
+            # Print an error message if there's an issue with the download and exit
+            print("Error downloading driver:", e)
+            return
+
         filename_in_archive = 'chromedriver-win64/chromedriver.exe'
-
-        if response.status_code == 200:
+        try:
+            # Extract the archive and retrieve the driver file
             zip_buffer = io.BytesIO(response.content)
-
             with zipfile.ZipFile(zip_buffer, 'r') as zip_ref:
-                zip_ref.extractall()
-
                 zip_ref.extract(filename_in_archive, self.path_user_data)
-                extracted_file_path = os.path.join(self.path_user_data, filename_in_archive)
-                new_file_path = os.path.join(self.path_user_data, file_driver)
-                os.rename(extracted_file_path, new_file_path)
+        except (zipfile.BadZipFile, KeyError) as e:
+            # Print an error message if there's an issue with extraction and exit
+            print("Error extracting archive:", e)
+            return
 
-            print("Драйвер успешно распакован в")
-        else:
-            print("Ошибка при загрузке драйвера")
+        # Path to the extracted driver file and the new destination
+        extracted_file_path = os.path.join(self.path_user_data, filename_in_archive)
+        new_file_path = os.path.join(self.path_user_data, file_driver)
+        try:
+            # Rename the driver file
+            os.rename(extracted_file_path, new_file_path)
+        except FileNotFoundError:
+            # If the file is not found after extraction, print a message
+            print("Driver file not found after extraction")
+            return
 
+        # Print a message indicating successful driver installation
+        print("Driver successfully installed at", new_file_path)
+        
     def create_profile(self, name, proxy, eco=True):
         self.eco = eco
         self.profile_name = name
@@ -70,7 +88,7 @@ class driver:
                     time.sleep(1)
             else:
                 print('Error start profile')
-                
+
             time.sleep(5)
             self.set_cookies(self.profile_name, None)
             self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
