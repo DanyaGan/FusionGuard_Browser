@@ -70,31 +70,19 @@ class driver:
         print("Driver successfully installed at", new_file_path)
         
     def create_profile(self, name, proxy, eco=True):
+        # Set the profile name and eco mode
         self.eco = eco
         self.profile_name = name
+        
+        # Ensure the existence of necessary directories
         self.ensure_directory_exists(f'{self.path_user_data}\\profiles')
         self.ensure_directory_exists(f'{self.path_user_data}\\profiles\\{name}_info')
         path_file = f'{self.path_user_data}\\driver.js'
         
-        if eco:
-            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            for _ in range(100):
-                output = self.node_process.stdout.readline()
-                try:
-                    r = json.loads(output.decode('utf-8'))
-                    self.node_process.terminate()
-                    break
-                except:
-                    time.sleep(1)
-            else:
-                print('Error start profile')
-
-            time.sleep(5)
-            self.set_cookies(self.profile_name, None)
-            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        else:
-            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
+        # Launch node process with appropriate parameters
+        self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Loop to capture output and handle JSON decoding
         for _ in range(100):
             output = self.node_process.stdout.readline()
             try:
@@ -103,11 +91,33 @@ class driver:
             except:
                 time.sleep(1)
         else:
-            print('Error start profile')
-                
+            print('Error starting profile')
+        
+        # Add delay for process readiness
+        time.sleep(5)
+        
+        # Set cookies for the profile
+        self.set_cookies(self.profile_name, None)
+        
+        # Re-launch node process with updated parameters if eco mode is enabled
+        if eco:
+            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Another loop to capture output and handle JSON decoding
+        for _ in range(100):
+            output = self.node_process.stdout.readline()
+            try:
+                r = json.loads(output.decode('utf-8'))
+                break
+            except:
+                time.sleep(1)
+        else:
+            print('Error starting profile')
+        
+        # Configure Chrome options with debugger address
         self.chrome_options = Options()
         self.chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{r['port']}")
-
+        
     def driver_start(self):
         self.download_and_extract_chrome_driver()
         self.driver = webdriver.Chrome(options=self.chrome_options, service=Service(f'{self.path_user_data}\\chromedriver_119.exe'))
