@@ -117,19 +117,24 @@ class driver:
         # Configure Chrome options with debugger address
         self.chrome_options = Options()
         self.chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{r['port']}")
-        
+
     def driver_start(self):
         self.download_and_extract_chrome_driver()
         self.driver = webdriver.Chrome(options=self.chrome_options, service=Service(f'{self.path_user_data}\\chromedriver_119.exe'))
 
-    def driver_stop(self):        
+    def driver_stop(self):   
+        # Close the driver and Selenium process 
         self.driver.quit()
         self.node_process.terminate()
         
-        self.get_cookies(self.profile_name, f'{self.path_user_data}\\profiles\\{self.profile_name}_info')
-        time.sleep(5)
-        if self.eco:
-            shutil.rmtree(f'{self.path_user_data }\\profiles\\{self.profile_name}')
+        # Get cookies and save them if a profile is specified
+        if self.profile_name:
+            self.get_cookies(self.profile_name, f'{self.path_user_data}\\profiles\\{self.profile_name}_info')
+            time.sleep(5)
+            
+            # If eco mode is enabled, remove the user profile
+            if self.eco:
+                shutil.rmtree(f'{self.path_user_data }\\profiles\\{self.profile_name}')
 
     def get_cookies(self, name_profile:str, path_file:str, consider:list=(), ignore:list=()):
         # Construct path to the cookies database
