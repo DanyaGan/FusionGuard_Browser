@@ -79,44 +79,43 @@ class driver:
         self.ensure_directory_exists(f'{self.path_user_data}\\profiles\\{name}_info')
         path_file = f'{self.path_user_data}\\driver.js'
         
-        # Launch node process with appropriate parameters
-        self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+        if eco:
+            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for _ in range(100):
+                output = self.node_process.stdout.readline()
+                try:
+                    r = json.loads(output.decode('utf-8'))
+                    self.node_process.terminate()
+                    break
+                except:
+                    time.sleep(1)
+            else:
+                print('Error start profile')
+
+            time.sleep(5)
+            self.set_cookies(self.profile_name, None)
+            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
         # Loop to capture output and handle JSON decoding
         for _ in range(100):
             output = self.node_process.stdout.readline()
             try:
                 r = json.loads(output.decode('utf-8'))
+                print(r)
                 break
             except:
                 time.sleep(1)
         else:
             print('Error starting profile')
-        
-        # Add delay for process readiness
-        time.sleep(5)
-        
-        # Set cookies for the profile
-        self.set_cookies(self.profile_name, None)
-        
-        # Re-launch node process with updated parameters if eco mode is enabled
-        if eco:
-            self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        # Another loop to capture output and handle JSON decoding
-        for _ in range(100):
-            output = self.node_process.stdout.readline()
-            try:
-                r = json.loads(output.decode('utf-8'))
-                break
-            except:
-                time.sleep(1)
-        else:
-            print('Error starting profile')
+            return False
         
         # Configure Chrome options with debugger address
         self.chrome_options = Options()
         self.chrome_options.add_experimental_option("debuggerAddress", f"127.0.0.1:{r['port']}")
+
+        return True
 
     def driver_start(self):
         self.download_and_extract_chrome_driver()
@@ -130,7 +129,7 @@ class driver:
         # Get cookies and save them if a profile is specified
         if self.profile_name:
             self.get_cookies(self.profile_name, f'{self.path_user_data}\\profiles\\{self.profile_name}_info')
-            time.sleep(5)
+            time.sleep(10)
             
             # If eco mode is enabled, remove the user profile
             if self.eco:
@@ -144,24 +143,25 @@ class driver:
         cookies = []
 
         # Connect to the cookies database
-        with sqlite3.connect(cpath) as conn:
-            c = conn.cursor()
-            # Fetch cookies data from the database
-            c.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value FROM cookies")
-            for row in c.fetchall():
-                host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value = row
-                try:
-                    # Decrypt the cookie value
-                    decrypted_value = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)[1].decode("utf-8") or value or ""
-                except Exception as e:
-                    # Handle decryption errors
-                    decrypted_value = value
+        conn = sqlite3.connect(cpath)
+        c = conn.cursor()
+        # Fetch cookies data from the database
+        c.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value FROM cookies")
+        for row in c.fetchall():
+            host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value = row
+            try:
+                # Decrypt the cookie value
+                decrypted_value = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)[1].decode("utf-8") or value or ""
+            except Exception as e:
+                # Handle decryption errors
+                decrypted_value = value
 
-                if host_key in consider or host_key not in ignore:
-                    # Append cookie details to the list
-                    cookies.append({"domain": host_key, "name": name, "value": decrypted_value, "path": path,
+            if host_key in consider or host_key not in ignore:
+                # Append cookie details to the list
+                cookies.append({"domain": host_key, "name": name, "value": decrypted_value, "path": path,
                                     "expires": expires_utc, "secure": is_secure, "httponly": is_httponly})
-                    
+        conn.close()
+        
         # Write cookies to a JSON file
         with open(f'{path_file}\cookies_{name_profile}.json', 'w') as f:
             f.write(str(cookies))
@@ -170,6 +170,9 @@ class driver:
         # Define paths for cookie database and JSON file
         db_cookies_path = f'{self.path_user_data}\\profiles\\{name_profile}\\Default\\Network\\Cookies'
         cookies_path = f'{self.path_user_data}\\profiles\\{name_profile}_info\\cookies_{name_profile}.json'
+        
+        if not os.path.exists(cookies_path): 
+            return
         
         # Read cookies from JSON file
         with open(cookies_path, 'r', encoding="utf-8") as f:

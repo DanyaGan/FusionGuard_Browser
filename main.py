@@ -113,7 +113,7 @@ class Browser:
             driver.create_profile(name, {'type': type_proxy, 'host': host_proxy})
         elif browser == 'node':
             driver = dr_nd()
-            driver.create_profile(name, host_proxy)
+            if not driver.create_profile(name, host_proxy): return
 
         driver.driver_start()
         input('Stop profile (Yes?)')
