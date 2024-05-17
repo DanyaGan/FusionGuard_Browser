@@ -79,7 +79,7 @@ class driver:
         self.ensure_directory_exists(f'{self.path_user_data}\\profiles\\{name}_info')
         path_file = f'{self.path_user_data}\\driver.js'
         
-        if eco:
+        if eco and not os.path.exists(f'{self.path_user_data}\\profiles\\{name}'):
             self.node_process = subprocess.Popen(['node', path_file, name, f'{self.path_user_data}\\profiles', str(eco), str(proxy)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             for _ in range(100):
                 output = self.node_process.stdout.readline()
@@ -129,7 +129,7 @@ class driver:
         # Get cookies and save them if a profile is specified
         if self.profile_name:
             self.get_cookies(self.profile_name, f'{self.path_user_data}\\profiles\\{self.profile_name}_info')
-            time.sleep(10)
+            time.sleep(5)
             
             # If eco mode is enabled, remove the user profile
             if self.eco:
