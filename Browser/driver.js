@@ -28,21 +28,7 @@ async function createProfile(profilePath) {
         });
     }
 
-    // Using the fetched fingerprint
     plugin.useFingerprint(fingerprint);
-
-    // Checking if a proxy is provided
-    if (process.argv[5] != 'nan') {
-        console.log('proxy', process.argv[5])
-
-        // Configuring browser to use proxy
-        plugin.useProxy(`socks:${process.argv[4]}`, {
-            // Change browser timezone according to proxy:
-            changeTimezone: true,
-            // Replace browser geolocation according to proxy:
-            changeGeolocation: true,
-        });
-    }
 
     // Launching Chrome browser with configured options
     const chrome = await plugin.launch(new Builder().setChromeOptions(options));
@@ -58,9 +44,15 @@ async function createProfile(profilePath) {
 async function open(profilePath) {
     // Using the specified profile path
     plugin.useProfile(path.resolve(profilePath), {});
-    // Spawning a new browser instance
-    browser = await plugin.spawn({ headless: false });
 
+    // Spawning a new browser instance
+    if (process.argv[5] != 'nan') {
+        // Using the fetched fingerprint
+        plugin.useProxy(process.argv[5]);
+    }
+
+    browser = await plugin.spawn({ headless: false });
+    
     // Logging port information
     console.log(JSON.stringify({
         'port': browser.port
