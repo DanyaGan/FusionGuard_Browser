@@ -146,19 +146,14 @@ class driver:
         conn = sqlite3.connect(cpath)
         c = conn.cursor()
         # Fetch cookies data from the database
-        c.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value FROM cookies")
+        c.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly FROM cookies")
         for row in c.fetchall():
-            host_key, name, value, path, expires_utc, is_secure, is_httponly, encrypted_value = row
-            try:
-                # Decrypt the cookie value
-                decrypted_value = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)[1].decode("utf-8") or value or ""
-            except Exception as e:
-                # Handle decryption errors
-                decrypted_value = value
+            host_key, name, value, path, expires_utc, is_secure, is_httponly = row
 
-            if host_key in consider or host_key not in ignore:
+            if host_key in consider and host_key not in ignore:
+                print(host_key,host_key in consider, consider)
                 # Append cookie details to the list
-                cookies.append({"domain": host_key, "name": name, "value": decrypted_value, "path": path,
+                cookies.append({"domain": host_key, "name": name, "value": value, "path": path,
                                     "expires": expires_utc, "secure": is_secure, "httponly": is_httponly})
         conn.close()
         
